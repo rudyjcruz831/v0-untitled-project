@@ -1,5 +1,6 @@
 import type React from "react"
 import { Navbar } from "@/components/navbar"
+import { Sidebar } from "@/components/sidebar"
 
 export default function DashboardLayout({
   children,
@@ -7,9 +8,12 @@ export default function DashboardLayout({
   children: React.ReactNode
 }) {
   return (
-    <div className="flex flex-col min-h-screen">
-      <Navbar />
-      <main className="flex-1">{children}</main>
+    <div className="flex min-h-screen">
+      <Sidebar />
+      <div className="flex flex-col flex-1">
+        <Navbar />
+        <main className="flex-1 overflow-y-auto">{children}</main>
+      </div>
     </div>
   )
 }
