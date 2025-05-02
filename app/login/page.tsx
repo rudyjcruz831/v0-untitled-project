@@ -1,31 +1,26 @@
-import { redirect } from "next/navigation"
-import { LoginForm } from "@/components/login-form"
-import { createClient } from "@/utils/supabase/server"
+import { LoginButton } from '@/components/auth/login-button'
+import { AuthForm } from '@/components/auth/auth-form'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Separator } from '@/components/ui/separator'
 
-export default async function LoginPage({
-  searchParams,
-}: {
-  searchParams: { redirectedFrom?: string }
-}) {
-  const supabase = createClient()
-  const {
-    data: { session },
-  } = await supabase.auth.getSession()
-
-  // If user is already logged in, redirect to dashboard
-  if (session) {
-    redirect("/dashboard")
-  }
-
+export default function LoginPage() {
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-50">
-      <div className="w-full max-w-md p-8 space-y-8 bg-white rounded-lg shadow-md">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold">Sign in to your account</h1>
-          <p className="mt-2 text-gray-600">Sign in to access your apartment listings dashboard</p>
-        </div>
-        <LoginForm redirectTo={searchParams.redirectedFrom || "/dashboard"} />
-      </div>
+    <div className="flex min-h-screen items-center justify-center p-4">
+      <Card className="w-full max-w-md">
+        <CardHeader>
+          <CardTitle>Welcome back</CardTitle>
+          <CardDescription>Sign in to your account to continue</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <AuthForm />
+          <div className="flex items-center space-x-2">
+            <Separator className="flex-1" />
+            <span className="text-xs text-muted-foreground">OR</span>
+            <Separator className="flex-1" />
+          </div>
+          <LoginButton />
+        </CardContent>
+      </Card>
     </div>
   )
 }

@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { BarChart, Building, Home, LayoutDashboard, MessageSquare, Settings, Users } from "lucide-react"
+import { BarChart, Building, LayoutDashboard, MessageSquare } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -24,19 +24,9 @@ const sidebarItems = [
     icon: MessageSquare,
   },
   {
-    title: "Users",
-    href: "/dashboard/users",
-    icon: Users,
-  },
-  {
     title: "Analytics",
     href: "/dashboard/analytics",
     icon: BarChart,
-  },
-  {
-    title: "Settings",
-    href: "/dashboard/settings",
-    icon: Settings,
   },
 ]
 
@@ -47,7 +37,7 @@ export function Sidebar() {
     <div className="hidden h-screen border-r md:block w-60">
       <div className="flex items-center h-16 px-4 border-b">
         <Link href="/" className="flex items-center gap-2 font-semibold">
-          <Home className="w-5 h-5" />
+          <Building className="w-5 h-5" />
           <span>Apartment Finder</span>
         </Link>
       </div>
