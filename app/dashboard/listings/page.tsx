@@ -8,66 +8,45 @@ import { Label } from "@/components/ui/label"
 import { SearchBar } from "@/components/ui/search-bar"
 import { Button } from "@/components/ui/button"
 import { ChevronLeft, ChevronRight } from "lucide-react"
-
-interface Property {
-  id: string
-  title: string
-  price: number
-  bedrooms: number
-  bathrooms: number
-  squareFootage: number
-  imageUrl: string
-}
+import { properties, Property } from "@/data/properties"
 
 export default function ListingsPage() {
-  const [priceRange, setPriceRange] = useState([0, 1000000])
-  const [bathrooms, setBathrooms] = useState(1)
-  const [squareFootage, setSquareFootage] = useState([0, 5000])
-  const [bedrooms, setBedrooms] = useState(1)
-  const [properties, setProperties] = useState<Property[]>([])
+  const [priceRange, setPriceRange] = useState([0, 10000])
+  const [bathrooms, setBathrooms] = useState(0)
+  const [squareFootage, setSquareFootage] = useState([0, 2000])
+  const [bedrooms, setBedrooms] = useState(0)
+  const [filteredProperties, setFilteredProperties] = useState<Property[]>([])
   const [currentPage, setCurrentPage] = useState(1)
-  const [totalPages, setTotalPages] = useState(1)
-  const [isLoading, setIsLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState("")
 
   const itemsPerPage = 9
 
   useEffect(() => {
-    fetchProperties()
-  }, [currentPage, searchQuery, priceRange, bathrooms, squareFootage, bedrooms])
+    // Apply filters
+    const filtered = properties.filter(property => {
+      const matchesPrice = property.price >= priceRange[0] && property.price <= priceRange[1]
+      const matchesBathrooms = bathrooms === 0 || property.bathrooms >= bathrooms
+      const matchesSquareFootage = property.squareFootage >= squareFootage[0] && property.squareFootage <= squareFootage[1]
+      const matchesBedrooms = bedrooms === 0 || property.bedrooms >= bedrooms
+      const matchesSearch = searchQuery === "" || 
+        property.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        property.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        property.location.toLowerCase().includes(searchQuery.toLowerCase())
 
-  const fetchProperties = async () => {
-    setIsLoading(true)
-    try {
-      // Construct query parameters
-      const params = new URLSearchParams({
-        page: currentPage.toString(),
-        limit: itemsPerPage.toString(),
-        minPrice: priceRange[0].toString(),
-        maxPrice: priceRange[1].toString(),
-        bathrooms: bathrooms.toString(),
-        minSqft: squareFootage[0].toString(),
-        maxSqft: squareFootage[1].toString(),
-        bedrooms: bedrooms.toString(),
-        search: searchQuery,
-      })
+      return matchesPrice && matchesBathrooms && matchesSquareFootage && matchesBedrooms && matchesSearch
+    })
 
-      // Replace with your actual API endpoint
-      const response = await fetch(`/api/properties?${params}`)
-      const data = await response.json()
-      console.log(data)
-      setProperties(data.properties)
-      setTotalPages(Math.ceil(data.total / itemsPerPage))
-    } catch (error) {
-      console.error("Error fetching properties:", error)
-    } finally {
-      setIsLoading(false)
-    }
-  }
+    setFilteredProperties(filtered)
+    setCurrentPage(1) // Reset to first page when filters change
+  }, [priceRange, bathrooms, squareFootage, bedrooms, searchQuery])
+
+  const totalPages = Math.ceil(filteredProperties.length / itemsPerPage)
+  const startIndex = (currentPage - 1) * itemsPerPage
+  const endIndex = startIndex + itemsPerPage
+  const currentProperties = filteredProperties.slice(startIndex, endIndex)
 
   const handleSearch = (query: string) => {
     setSearchQuery(query)
-    setCurrentPage(1) // Reset to first page on new search
   }
 
   return (
@@ -88,8 +67,8 @@ export default function ListingsPage() {
               <Label>Price Range</Label>
               <Slider
                 min={0}
-                max={1000000}
-                step={10000}
+                max={10000}
+                step={100}
                 value={priceRange}
                 onValueChange={setPriceRange}
                 className="w-full"
@@ -105,9 +84,10 @@ export default function ListingsPage() {
               <Label>Bathrooms</Label>
               <Input
                 type="number"
-                min={1}
+                min={0}
                 value={bathrooms}
                 onChange={(e) => setBathrooms(Number(e.target.value))}
+                placeholder="Any"
               />
             </div>
 
@@ -116,7 +96,7 @@ export default function ListingsPage() {
               <Label>Square Footage</Label>
               <Slider
                 min={0}
-                max={5000}
+                max={2000}
                 step={100}
                 value={squareFootage}
                 onValueChange={setSquareFootage}
@@ -133,9 +113,10 @@ export default function ListingsPage() {
               <Label>Bedrooms</Label>
               <Input
                 type="number"
-                min={1}
+                min={0}
                 value={bedrooms}
                 onChange={(e) => setBedrooms(Number(e.target.value))}
+                placeholder="Any"
               />
             </div>
           </Card>
@@ -143,64 +124,66 @@ export default function ListingsPage() {
 
         {/* Results Section */}
         <div className="md:col-span-3">
-          {isLoading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {[...Array(6)].map((_, i) => (
-                <Card key={i} className="p-4">
-                  <div className="aspect-video bg-gray-200 rounded-md mb-4 animate-pulse"></div>
-                  <div className="h-4 bg-gray-200 rounded w-3/4 mb-2 animate-pulse"></div>
-                  <div className="h-4 bg-gray-200 rounded w-1/2 animate-pulse"></div>
-                </Card>
-              ))}
-            </div>
-          ) : (
-            <>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {properties.map((property) => (
-                  <Card key={property.id} className="p-4">
-                    <div className="aspect-video bg-gray-200 rounded-md mb-4">
-                      <img
-                        src={property.imageUrl}
-                        alt={property.title}
-                        className="w-full h-full object-cover rounded-md"
-                      />
-                    </div>
-                    <h3 className="font-semibold">{property.title}</h3>
-                    <p className="text-gray-600">${property.price.toLocaleString()}</p>
-                    <div className="flex gap-2 mt-2 text-sm text-gray-500">
-                      <span>{property.bedrooms} beds</span>
-                      <span>•</span>
-                      <span>{property.bathrooms} baths</span>
-                      <span>•</span>
-                      <span>{property.squareFootage} sqft</span>
-                    </div>
-                  </Card>
-                ))}
-              </div>
+          <div className="mb-4">
+            <p className="text-sm text-gray-500">
+              Showing {filteredProperties.length} properties
+            </p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {currentProperties.map((property) => (
+              <Card key={property.id} className="p-4">
+                <div className="aspect-video bg-gray-200 rounded-md mb-4">
+                  <img
+                    src={property.imageUrl}
+                    alt={property.title}
+                    className="w-full h-full object-cover rounded-md"
+                  />
+                </div>
+                <h3 className="font-semibold">{property.title}</h3>
+                <p className="text-gray-600">${property.price.toLocaleString()}/mo</p>
+                <div className="flex gap-2 mt-2 text-sm text-gray-500">
+                  <span>{property.bedrooms} beds</span>
+                  <span>•</span>
+                  <span>{property.bathrooms} baths</span>
+                  <span>•</span>
+                  <span>{property.squareFootage} sqft</span>
+                </div>
+                <p className="text-sm text-gray-500 mt-2">{property.location}</p>
+                <a 
+                  href={property.homeUrl} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="mt-4 inline-block text-sm text-blue-600 hover:text-blue-800"
+                >
+                  View on Redfin →
+                </a>
+              </Card>
+            ))}
+          </div>
 
-              {/* Pagination */}
-              <div className="flex justify-center items-center gap-2 mt-8">
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-                  disabled={currentPage === 1}
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                </Button>
-                <span className="text-sm">
-                  Page {currentPage} of {totalPages}
-                </span>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
-                  disabled={currentPage === totalPages}
-                >
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
-              </div>
-            </>
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex justify-center items-center gap-2 mt-8">
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1}
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <span className="text-sm">
+                Page {currentPage} of {totalPages}
+              </span>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                disabled={currentPage === totalPages}
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
           )}
         </div>
       </div>
