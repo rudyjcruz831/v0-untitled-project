@@ -8,6 +8,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.action_chains import ActionChains
 import subprocess
 import sys
+import os
 
 if len(sys.argv) > 1:
     search_query = sys.argv[1]
