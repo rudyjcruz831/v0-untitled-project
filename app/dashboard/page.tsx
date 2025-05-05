@@ -3,7 +3,7 @@ import { createClient } from "@/utils/supabase/server"
 import { SearchBar } from "@/components/ui/search-bar"
 
 export default async function DashboardPage() {
-  const supabase = await createClient()
+  const supabase = createClient()
   const {
     data: { session },
   } = await supabase.auth.getSession()

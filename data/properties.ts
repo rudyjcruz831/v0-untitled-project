@@ -1,4 +1,4 @@
-import rentalListings from './rental_listings.json'
+import rentalListings from '../data/rental_listings.json'
 
 export interface Property {
   id: string
@@ -16,27 +16,23 @@ export interface Property {
   homeUrl: string
 }
 
-// Helper function to extract numbers from strings
-const extractNumber = (str: string): number => {
-  if (!str || str === "-" || str === "None") return 0
-  const numbers = str.match(/\d+/g)
-  return numbers ? Number(numbers[0]) : 0
+// Helper functions to extract numeric values from strings
+function extractPrice(priceStr: string): number {
+  // Remove currency symbols and convert to number
+  const numericStr = priceStr.replace(/[^0-9]/g, '')
+  return parseInt(numericStr) || 0
 }
 
-// Helper function to extract price from various formats
-const extractPrice = (priceStr: string): number => {
-  if (!priceStr) return 0
-  // Handle formats like "$3,284+/mo", "1 bd: $2,889", "Studio: $2,492"
-  const priceMatch = priceStr.match(/\$([\d,]+)/)
-  return priceMatch ? Number(priceMatch[1].replace(/,/g, '')) : 0
+function extractNumber(str: string): number {
+  // Extract first number from string
+  const match = str.match(/\d+/)
+  return match ? parseInt(match[0]) : 0
 }
 
-// Helper function to extract square footage from various formats
-const extractSquareFootage = (areaStr: string): number => {
-  if (!areaStr || areaStr === "None None") return 0
-  // Handle formats like "534-546 sq ft", "800 sq ft"
-  const numbers = areaStr.match(/\d+/g)
-  return numbers ? Number(numbers[0]) : 0
+function extractSquareFootage(areaStr: string): number {
+  // Extract first number from string
+  const match = areaStr.match(/\d+/)
+  return match ? parseInt(match[0]) : 0
 }
 
 // Transform the JSON data to match our Property interface
@@ -47,16 +43,22 @@ export const properties: Property[] = rentalListings.map((listing: any, index: n
   const bathrooms = extractNumber(listing.baths)
   const squareFootage = extractSquareFootage(listing.area)
 
+  // Extract city and state from address
+  const addressParts = listing.address.split(',')
+  const city = addressParts[1]?.trim() || ''
+  const state = addressParts[2]?.trim() || ''
+  const location = `${city}, ${state}`
+
   return {
     id: index.toString(),
     title: listing.address,
-    description: `${bedrooms} bedroom, ${bathrooms} bathroom apartment in Cupertino`,
+    description: `${bedrooms} bedroom, ${bathrooms} bathroom apartment in ${city}`,
     price: price,
     bedrooms: bedrooms,
     bathrooms: bathrooms,
     squareFootage: squareFootage,
     imageUrl: listing.image_url,
-    location: "Cupertino, CA",
+    location: location,
     type: "apartment",
     status: "available",
     features: [],

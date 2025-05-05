@@ -4,7 +4,8 @@ import { useRouter } from "next/navigation"
 import { useState } from "react"
 import { Input } from "./input"
 import { Button } from "./button"
-import { Search } from "lucide-react"
+import { Search, Loader2 } from "lucide-react"
+import { toast } from "sonner"
 
 interface SearchBarProps {
   onSearch?: (query: string) => void
@@ -13,14 +14,39 @@ interface SearchBarProps {
 export function SearchBar({ onSearch }: SearchBarProps) {
   const router = useRouter()
   const [searchQuery, setSearchQuery] = useState("")
+  const [isLoading, setIsLoading] = useState(false)
 
-  const handleSearch = (e: React.FormEvent) => {
+  const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault()
     if (searchQuery.trim()) {
       if (onSearch) {
         onSearch(searchQuery.trim())
       } else {
-        router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`)
+        try {
+          setIsLoading(true)
+          const response = await fetch('/api/search', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ query: searchQuery.trim() }),
+          });
+
+          const data = await response.json();
+
+          if (!response.ok) {
+            throw new Error(data.error || 'Search failed');
+          }
+
+          // Refresh the page to show new results
+          router.refresh();
+          toast.success('Search completed successfully');
+        } catch (error) {
+          console.error('Search error:', error);
+          toast.error('Failed to perform search. Please try again.');
+        } finally {
+          setIsLoading(false)
+        }
       }
     }
   }
@@ -34,14 +60,20 @@ export function SearchBar({ onSearch }: SearchBarProps) {
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           className="w-full pr-12"
+          disabled={isLoading}
         />
         <Button
           type="submit"
           size="icon"
           className="absolute right-2"
           variant="ghost"
+          disabled={isLoading}
         >
-          <Search className="h-4 w-4" />
+          {isLoading ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <Search className="h-4 w-4" />
+          )}
         </Button>
       </div>
     </form>
