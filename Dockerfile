@@ -1,5 +1,8 @@
 FROM node:20-alpine AS builder
 
+# Install pnpm and Python
+RUN apk add --no-cache python3 py3-pip
+
 # Install pnpm
 RUN npm install -g pnpm
 
@@ -23,6 +26,9 @@ RUN pnpm run build
 
 FROM node:20-alpine AS runner
 
+# Install pnpm and Python
+RUN apk add --no-cache python3 py3-pip
+
 # Install pnpm
 RUN npm install -g pnpm
 
@@ -44,7 +50,13 @@ COPY --from=builder /app/tailwind.config.ts ./tailwind.config.ts
 COPY --from=builder /app/postcss.config.mjs ./postcss.config.mjs
 COPY --from=builder /app/data ./data
 
+# Set up Python virtual environment
+RUN python3 -m venv /app/venv
+ENV PATH="/app/venv/bin:$PATH"
 
+# Install Python dependencies in virtual environment
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Install only production dependencies
 RUN pnpm install --prod --frozen-lockfile
