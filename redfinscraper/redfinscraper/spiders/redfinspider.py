@@ -4,7 +4,6 @@ import math
 
 class RedfinSpider(scrapy.Spider):
     name = 'homes'
-    #start_urls = ['https://www.redfin.com/city/2673/CA/Campbell/apartments-for-rent']
 
 
     def __init__(self, start_url=None, *args, **kwargs):
@@ -32,19 +31,17 @@ class RedfinSpider(scrapy.Spider):
 
             #iterate throught the remaining pages using the URL
             for page_number in range (2, total_pages + 1):
-                page_url = f"https://www.redfin.com/city/2673/CA/Campbell/apartments-for-rent-{page_number}"
+                page_url = self.start_url.rstrip("/") + f"-{page_number}"
+                self.logger.info(f"Queuing page {page_number}: {page_url}")
                 yield SeleniumRequest(
                     url=page_url,
                     callback=self.parse,
-                    wait_time=5
+                    wait_time=30,
+                    dont_filter=True
                 )
 
     def parse(self, response):
         
-        #scrape all the information from the home cards
-        products = response.css('div.bp-Homecard.bp-InteractiveHomecard')
-        print(f"Found {len(products)} rental cards on this page.")
-
         for products in response.css('div.HomeCardContainer.flex.justify-center'):
 
             raw_text = products.xpath('.//div[contains(@class, "bp-Homecard__Address--address")]//text()').getall()
@@ -71,6 +68,8 @@ class RedfinSpider(scrapy.Spider):
 
             area_value = products.css('span.bp-Homecard__LockedStat--value::text').get()
             area_label = products.css('span.bp-Homecard__LockedStat--label::text').get()
+            area_value = area_value or "-"
+            area_label = area_label or "-"
             area = f"{area_value} {area_label}"
             yield {
                 "address" : address,
@@ -81,6 +80,5 @@ class RedfinSpider(scrapy.Spider):
                 "home_url" : full_url,
                 "image_url" : products.css('img.bp-Homecard__Photo--image::attr(src)').get()
                 }
-
 
             
