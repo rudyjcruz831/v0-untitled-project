@@ -30,7 +30,7 @@ export async function POST(request: Request) {
 
 
     return new Promise((resolve) => {
-      const pythonProcess = spawn('python', [scriptPath, sanitizedQuery, outputPath]);
+      const pythonProcess = spawn('python', [scriptPath, sanitizedQuery, outputPath, scrapyProjectPath]);
       
       pythonProcess.stdout.on('data', (data) => {
         console.log(`Python script output: ${data}`);

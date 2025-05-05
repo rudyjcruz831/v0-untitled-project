@@ -8,6 +8,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.action_chains import ActionChains
 import subprocess
 import sys
+import os
 
 if len(sys.argv) > 1:
     search_query = sys.argv[1]
@@ -20,10 +21,10 @@ else:
     output_file = "rental_listings.json"
 
 if len(sys.argv) > 3:
-    scrapy_project_dir = sys.argv[3]
+    scrapy_project_dir = os.path.abspath(sys.argv[3])
 else:
-    scrapy_project_dir = os.getcwd()  # Fallback to current working directory
-
+    print("ERROR: No Scrapy project directory provided. Exiting.")
+    sys.exit(1)
 
 # ----- Launch Undetected Chrome -----
 options = uc.ChromeOptions()

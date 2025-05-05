@@ -155,7 +155,7 @@ export default function ListingsPage() {
                   rel="noopener noreferrer"
                   className="mt-4 inline-block text-sm text-blue-600 hover:text-blue-800"
                 >
-                  View on Redfin →
+                  View Source →
                 </a>
               </Card>
             ))}
