@@ -18,16 +18,6 @@ const sidebarItems = [
     href: "/dashboard/listings",
     icon: Building,
   },
-  {
-    title: "Inquiries",
-    href: "/dashboard/inquiries",
-    icon: MessageSquare,
-  },
-  {
-    title: "Analytics",
-    href: "/dashboard/analytics",
-    icon: BarChart,
-  },
 ]
 
 export function Sidebar() {

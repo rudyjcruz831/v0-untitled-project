@@ -9,6 +9,7 @@ class RedfinSpider(scrapy.Spider):
     def __init__(self, start_url=None, *args, **kwargs):
         super(RedfinSpider, self).__init__(*args, **kwargs)
         self.start_url = start_url
+        
 
     def start_requests(self):
         yield SeleniumRequest(
@@ -31,13 +32,12 @@ class RedfinSpider(scrapy.Spider):
 
             #iterate throught the remaining pages using the URL
             for page_number in range (2, total_pages + 1):
-                page_url = self.start_url.rstrip("/") + f"-{page_number}"
+                page_url = self.start_url.rstrip("/") + f"/page-{page_number}"
                 self.logger.info(f"Queuing page {page_number}: {page_url}")
                 yield SeleniumRequest(
                     url=page_url,
                     callback=self.parse,
                     wait_time=30,
-                    dont_filter=True
                 )
 
     def parse(self, response):
