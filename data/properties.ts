@@ -30,9 +30,13 @@ function extractNumber(str: string): number {
 }
 
 function extractSquareFootage(areaStr: string): number {
-  // Extract first number from string
-  const match = areaStr.match(/\d+/)
-  return match ? parseInt(match[0]) : 0
+  // Remove commas and extract the number before "sq ft"
+  const match = areaStr.match(/([\d,]+)\s*sq\s*ft/)
+  if (match) {
+    // Remove commas and convert to number
+    return parseInt(match[1].replace(/,/g, ''))
+  }
+  return 0
 }
 
 // Transform the JSON data to match our Property interface
