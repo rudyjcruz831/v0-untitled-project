@@ -15,6 +15,7 @@ export default function ListingsPage() {
   const [bathrooms, setBathrooms] = useState(0)
   const [squareFootage, setSquareFootage] = useState([0, 10000])
   const [bedrooms, setBedrooms] = useState(0)
+  const [roommates, setRoommates] = useState(0)
   const [filteredProperties, setFilteredProperties] = useState<Property[]>([])
   const [currentPage, setCurrentPage] = useState(1)
   const [searchQuery, setSearchQuery] = useState("")
@@ -100,6 +101,18 @@ export default function ListingsPage() {
               </div>
             </div>
 
+            {/* Bedrooms Filter */}
+            <div className="space-y-2 mt-4">
+              <Label>Bedrooms</Label>
+              <Input
+                type="number"
+                min={0}
+                value={bedrooms}
+                onChange={(e) => setBedrooms(Number(e.target.value))}
+                placeholder="Any"
+              />
+            </div>
+
             {/* Bathrooms Filter */}
             <div className="space-y-2 mt-4">
               <Label>Bathrooms</Label>
@@ -129,15 +142,15 @@ export default function ListingsPage() {
               </div>
             </div>
 
-            {/* Bedrooms Filter */}
+            {/* Roommates Filter */}
             <div className="space-y-2 mt-4">
-              <Label>Bedrooms</Label>
+              <Label>Roommates</Label>
               <Input
                 type="number"
                 min={0}
-                value={bedrooms}
-                onChange={(e) => setBedrooms(Number(e.target.value))}
-                placeholder="Any"
+                value={roommates}
+                onChange={(e) => setRoommates(Number(e.target.value))}
+                placeholder="0"
               />
             </div>
           </Card>
@@ -161,7 +174,18 @@ export default function ListingsPage() {
                   />
                 </div>
                 <h3 className="font-semibold">{property.title}</h3>
-                <p className="text-gray-600">${property.price.toLocaleString()}/mo</p>
+                <p className="text-gray-600">
+                  ${Math.round(property.price / (roommates + 1)).toLocaleString()}/mo
+                  {roommates > 0 && (
+                    <>
+                      <span className="text-sm text-gray-500"> (per person)</span>
+                      <br />
+                      <span className="text-sm text-gray-500">
+                        Original: ${property.price.toLocaleString()}/mo
+                      </span>
+                    </>
+                  )}
+                </p>
                 <div className="flex items-center gap-2 text-sm text-gray-600">
                   <span>{property.bedroomsDisplay}</span>
                   <span>•</span>
