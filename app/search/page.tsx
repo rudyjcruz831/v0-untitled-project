@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label"
 export default function SearchPage() {
   const [priceRange, setPriceRange] = useState([0, 1000000])
   const [bathrooms, setBathrooms] = useState(1)
-  const [squareFootage, setSquareFootage] = useState([0, 5000])
+  const [squareFootage, setSquareFootage] = useState([0, 10000])
   const [bedrooms, setBedrooms] = useState(1)
 
   return (
@@ -53,7 +53,7 @@ export default function SearchPage() {
               <Label>Square Footage</Label>
               <Slider
                 min={0}
-                max={5000}
+                max={10000}
                 step={100}
                 value={squareFootage}
                 onValueChange={setSquareFootage}

@@ -13,7 +13,7 @@ import { properties, Property } from "@/data/properties"
 export default function ListingsPage() {
   const [priceRange, setPriceRange] = useState([0, 10000])
   const [bathrooms, setBathrooms] = useState(0)
-  const [squareFootage, setSquareFootage] = useState([0, 2000])
+  const [squareFootage, setSquareFootage] = useState([0, 10000])
   const [bedrooms, setBedrooms] = useState(0)
   const [filteredProperties, setFilteredProperties] = useState<Property[]>([])
   const [currentPage, setCurrentPage] = useState(1)
@@ -96,7 +96,7 @@ export default function ListingsPage() {
               <Label>Square Footage</Label>
               <Slider
                 min={0}
-                max={2000}
+                max={10000}
                 step={100}
                 value={squareFootage}
                 onValueChange={setSquareFootage}
