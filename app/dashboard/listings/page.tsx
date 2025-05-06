@@ -25,9 +25,30 @@ export default function ListingsPage() {
     // Apply filters
     const filtered = properties.filter(property => {
       const matchesPrice = property.price >= priceRange[0] && property.price <= priceRange[1]
-      const matchesBathrooms = bathrooms === 0 || property.bathrooms >= bathrooms
+      
+      // Handle bedroom range matching
+      const matchesBedrooms = bedrooms === 0 || (() => {
+        const rangeMatch = property.bedroomsDisplay.match(/(\d+)-(\d+)/)
+        if (rangeMatch) {
+          const minBeds = parseInt(rangeMatch[1])
+          const maxBeds = parseInt(rangeMatch[2])
+          return bedrooms >= minBeds && bedrooms <= maxBeds
+        }
+        return property.bedrooms >= bedrooms
+      })()
+
+      // Handle bathroom range matching
+      const matchesBathrooms = bathrooms === 0 || (() => {
+        const rangeMatch = property.bathroomsDisplay.match(/(\d+)-(\d+)/)
+        if (rangeMatch) {
+          const minBaths = parseInt(rangeMatch[1])
+          const maxBaths = parseInt(rangeMatch[2])
+          return bathrooms >= minBaths && bathrooms <= maxBaths
+        }
+        return property.bathrooms >= bathrooms
+      })()
+
       const matchesSquareFootage = property.squareFootage >= squareFootage[0] && property.squareFootage <= squareFootage[1]
-      const matchesBedrooms = bedrooms === 0 || property.bedrooms >= bedrooms
       const matchesSearch = searchQuery === "" || 
         property.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         property.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -141,10 +162,10 @@ export default function ListingsPage() {
                 </div>
                 <h3 className="font-semibold">{property.title}</h3>
                 <p className="text-gray-600">${property.price.toLocaleString()}/mo</p>
-                <div className="flex gap-2 mt-2 text-sm text-gray-500">
-                  <span>{property.bedrooms} beds</span>
+                <div className="flex items-center gap-2 text-sm text-gray-600">
+                  <span>{property.bedroomsDisplay}</span>
                   <span>•</span>
-                  <span>{property.bathrooms} baths</span>
+                  <span>{property.bathroomsDisplay}</span>
                   <span>•</span>
                   <span>{property.squareFootage} sqft</span>
                 </div>

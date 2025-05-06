@@ -7,6 +7,8 @@ export interface Property {
   price: number
   bedrooms: number
   bathrooms: number
+  bedroomsDisplay: string
+  bathroomsDisplay: string
   squareFootage: number
   imageUrl: string
   location: string
@@ -24,7 +26,20 @@ function extractPrice(priceStr: string): number {
 }
 
 function extractNumber(str: string): number {
-  // Extract first number from string
+  // Handle ranges (e.g., "1-2")
+  const rangeMatch = str.match(/(\d+)-(\d+)/)
+  if (rangeMatch) {
+    // Return the average of the range
+    return Math.round((parseInt(rangeMatch[1]) + parseInt(rangeMatch[2])) / 2)
+  }
+  
+  // Handle decimal values (e.g., "1.5")
+  const decimalMatch = str.match(/(\d+\.?\d*)/)
+  if (decimalMatch) {
+    return parseFloat(decimalMatch[1])
+  }
+  
+  // Fallback to first number
   const match = str.match(/\d+/)
   return match ? parseInt(match[0]) : 0
 }
@@ -60,6 +75,8 @@ export const properties: Property[] = rentalListings.map((listing: any, index: n
     price: price,
     bedrooms: bedrooms,
     bathrooms: bathrooms,
+    bedroomsDisplay: listing.beds,
+    bathroomsDisplay: listing.baths,
     squareFootage: squareFootage,
     imageUrl: listing.image_url,
     location: location,
