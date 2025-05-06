@@ -1,16 +1,19 @@
-import { redirect } from "next/navigation"
-import { createClient } from "@/utils/supabase/server"
+'use client'
+
+import { useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { SearchBar } from "@/components/ui/search-bar"
+import Cookies from 'js-cookie'
 
-export default async function DashboardPage() {
-  const supabase = createClient()
-  const {
-    data: { session },
-  } = await supabase.auth.getSession()
+export default function DashboardPage() {
+  const router = useRouter()
 
-  if (!session) {
-    redirect("/login")
-  }
+  useEffect(() => {
+    const idToken = Cookies.get('idToken')
+    if (!idToken) {
+      router.push('/login')
+    }
+  }, [router])
 
   return (
     <div className="container py-8">

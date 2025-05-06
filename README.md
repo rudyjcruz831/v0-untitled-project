@@ -28,3 +28,17 @@ Continue building your app on:
 2. Deploy your chats from the v0 interface
 3. Changes are automatically pushed to this repository
 4. Vercel deploys the latest version from this repository
+
+
+--------------------------------------------------------------------------------------------------------------------------------------
+
+1. to make it work in your local on your pc we need to download npm: 
+npm install
+npm install --legacy-peer-deps
+
+
+2. for auth: 
+npm install js-cookie @types/js-cookie
+npm install js-cookie @types/js-cookie --legacy-peer-deps
+
+3. also make sure that when running it on VM we need to change the backend api solution would be maybe to store into env variables

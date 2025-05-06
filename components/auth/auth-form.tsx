@@ -1,12 +1,15 @@
 'use client'
 
 import { useState } from 'react'
-import { createClient } from '@/utils/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useRouter } from 'next/navigation'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import Cookies from 'js-cookie'
+import { AvatarImage, AvatarFallback } from '@/components/ui/avatar'
+// import { useAuth } from '@/hooks/useAuth'
+// import { supabase } from '@/lib/supabaseClient'
 
 export function AuthForm() {
   const router = useRouter()
@@ -21,36 +24,84 @@ export function AuthForm() {
     const formData = new FormData(e.currentTarget)
     const email = formData.get('email') as string
     const password = formData.get('password') as string
+    // Only get firstName and lastName for signup
+    const firstName = mode === 'signup' ? (formData.get('firstName') as string) : undefined
+    const lastName = mode === 'signup' ? (formData.get('lastName') as string) : undefined
 
     try {
-      const supabase = createClient()
+      console.log('Starting authentication process...')
+      const endpoint = mode === 'signin' 
+        ? `${process.env.NEXT_PUBLIC_API_URL}/user/signin`
+        : `${process.env.NEXT_PUBLIC_API_URL}/user/signup`
+
+      console.log('Sending request to:', endpoint)
+      const body = mode === 'signin'
+        ? JSON.stringify({ email, password })
+        : JSON.stringify({ email, password, firstName, lastName })
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body,
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.message || 'Authentication failed')
+      }
+
+      const data = await response.json()
+      console.log('Received response:', data)
       
-      const { error } = mode === 'signin' 
-        ? await supabase.auth.signInWithPassword({ email, password })
-        : await supabase.auth.signUp({ 
-            email, 
-            password,
-            options: {
-              emailRedirectTo: `${window.location.origin}/auth/callback`
-            }
+      if (mode === 'signin') {
+        // Store tokens in cookies
+        if (data.tokens) {
+          console.log('Storing tokens...')
+          Cookies.set('idToken', data.tokens.IDToken, { 
+            expires: 7, 
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'strict',
+            path: '/'
           })
-
-      if (error) {
-        throw error
+          Cookies.set('refreshToken', data.tokens.RefreshToken, {
+            expires: 30, 
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'strict',
+            path: '/'
+          })
+          console.log('Tokens stored successfully')
+        }
+        if (data.user) {
+          console.log('Storing user info...')
+          Cookies.set('userEmail', data.user.email, { expires: 7, path: '/' })
+          if (data.user.firstName) {
+            Cookies.set('userFirstName', data.user.firstName, { expires: 7, path: '/' })
+          }
+          console.log('User info stored successfully')
+        }
+        console.log('Redirecting to dashboard...')
+        window.location.href = '/dashboard'
+      } else {
+        // On successful signup, redirect to sign-in tab
+        setTimeout(() => {
+          document.querySelector('[data-state="signin"]')?.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+        }, 100)
       }
-
-      if (mode === 'signup') {
-        setError('Please check your email for the confirmation link.')
-        return
-      }
-
-      router.refresh()
-      router.push('/dashboard')
     } catch (error) {
+      console.error('Authentication error:', error)
       setError(error instanceof Error ? error.message : 'An error occurred')
     } finally {
       setIsLoading(false)
     }
+  }
+
+  function handleLogout() {
+    Cookies.remove('idToken');
+    Cookies.remove('refreshToken');
+    Cookies.remove('userEmail');
+    Cookies.remove('userFirstName');
+    window.location.href = '/'; // or use router to redirect
   }
 
   return (
@@ -95,6 +146,26 @@ export function AuthForm() {
       </TabsContent>
       <TabsContent value="signup">
         <form onSubmit={(e) => handleSubmit(e, 'signup')} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="signup-firstName">First Name</Label>
+            <Input
+              id="signup-firstName"
+              name="firstName"
+              type="text"
+              placeholder="First Name"
+              required
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="signup-lastName">Last Name</Label>
+            <Input
+              id="signup-lastName"
+              name="lastName"
+              type="text"
+              placeholder="Last Name"
+              required
+            />
+          </div>
           <div className="space-y-2">
             <Label htmlFor="signup-email">Email</Label>
             <Input

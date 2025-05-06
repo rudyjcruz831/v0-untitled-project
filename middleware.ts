@@ -1,6 +1,6 @@
-import { NextResponse } from "next/server"
-import type { NextRequest } from "next/server"
-import { createServerClient } from "@supabase/ssr"
+import { createServerClient } from '@supabase/ssr'
+import { NextResponse } from 'next/server'
+import type { NextRequest } from 'next/server'
 
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({
@@ -17,72 +17,48 @@ export async function middleware(request: NextRequest) {
         get(name: string) {
           return request.cookies.get(name)?.value
         },
-        set(
-          name: string,
-          value: string,
-          options: {
-            path: string
-            maxAge: number
-            domain?: string
-            sameSite?: "lax" | "strict" | "none"
-            secure?: boolean
-          },
-        ) {
-          request.cookies.set({
-            name,
-            value,
-            ...options,
-          })
-          response = NextResponse.next({
-            request: {
-              headers: request.headers,
-            },
-          })
+        set(name: string, value: string, options: any) {
           response.cookies.set({
             name,
             value,
             ...options,
           })
         },
-        remove(
-          name: string,
-          options: { path: string; domain?: string; sameSite?: "lax" | "strict" | "none"; secure?: boolean },
-        ) {
-          request.cookies.set({
-            name,
-            value: "",
-            ...options,
-          })
-          response = NextResponse.next({
-            request: {
-              headers: request.headers,
-            },
-          })
+        remove(name: string, options: any) {
           response.cookies.set({
             name,
-            value: "",
+            value: '',
             ...options,
           })
         },
       },
-    },
+    }
   )
 
-  // This will refresh session if expired - required for Server Components
-  // https://supabase.com/docs/guides/auth/server-side/nextjs
-  await supabase.auth.getUser()
+  const { data: { session } } = await supabase.auth.getSession()
+  const idToken = request.cookies.get('idToken')?.value
 
-  // If accessing a protected route and not authenticated, redirect to login
-  const { pathname } = request.nextUrl
-  if (pathname.startsWith("/dashboard")) {
-    const {
-      data: { session },
-    } = await supabase.auth.getSession()
-    if (!session) {
-      const redirectUrl = new URL("/login", request.url)
-      redirectUrl.searchParams.set("redirectedFrom", pathname)
-      return NextResponse.redirect(redirectUrl)
-    }
+  const isAuthPage = request.nextUrl.pathname.startsWith('/login') || 
+                    request.nextUrl.pathname.startsWith('/auth')
+  const isApiRoute = request.nextUrl.pathname.startsWith('/api')
+  const isStaticFile = request.nextUrl.pathname.startsWith('/_next') ||
+                      request.nextUrl.pathname.startsWith('/favicon.ico')
+
+  // Skip middleware for API routes and static files
+  if (isApiRoute || isStaticFile) {
+    return response
+  }
+
+  // If trying to access auth pages while logged in, redirect to dashboard
+  if (isAuthPage && (session || idToken)) {
+    return NextResponse.redirect(new URL('/dashboard', request.url))
+  }
+
+  // If trying to access protected pages while logged out, redirect to login
+  if (!isAuthPage && !session && !idToken) {
+    const loginUrl = new URL('/login', request.url)
+    loginUrl.searchParams.set('redirectedFrom', request.nextUrl.pathname)
+    return NextResponse.redirect(loginUrl)
   }
 
   return response
@@ -97,6 +73,6 @@ export const config = {
      * - favicon.ico (favicon file)
      * Feel free to modify this pattern to include more paths.
      */
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    '/((?!_next/static|_next/image|favicon.ico).*)',
   ],
 }

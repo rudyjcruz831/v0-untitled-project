@@ -4,7 +4,6 @@ import { useState, useEffect } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Menu, Bell, Search } from "lucide-react"
-import { createClient } from "@/utils/supabase/client"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -18,120 +17,129 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Input } from "@/components/ui/input"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { Sidebar } from "@/components/sidebar"
-import type { User } from "@supabase/supabase-js"
+import { createClient } from '@/utils/supabase/client'
+import { LoginButton } from '@/components/auth/login-button'
+import Cookies from 'js-cookie'
 
 export function Navbar() {
   const router = useRouter()
+  const [isLoggedIn, setIsLoggedIn] = useState(false)
+  const [userEmail, setUserEmail] = useState<string | null>(null)
+  const [isLoading, setIsLoading] = useState(false)
   const supabase = createClient()
-  const [user, setUser] = useState<User | null>(null)
-  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const getUser = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
-      setUser(user)
-      setLoading(false)
+    const checkUser = async () => {
+      const { data: { session } } = await supabase.auth.getSession()
+      const idToken = Cookies.get('idToken')
+      const email = session?.user?.email || Cookies.get('userEmail') || null
+
+      setIsLoggedIn(!!(session || idToken))
+      setUserEmail(email)
     }
+    checkUser()
 
-    getUser()
+    // Poll every 1 second for cookie changes
+    const interval = setInterval(checkUser, 1000)
 
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null)
+    // Listen for custom login/logout events
+    const handleCustomAuth = () => checkUser()
+    window.addEventListener('custom-auth-login', handleCustomAuth)
+    window.addEventListener('custom-auth-logout', handleCustomAuth)
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      const email = session?.user?.email || Cookies.get('userEmail') || null
+      setIsLoggedIn(!!session)
+      setUserEmail(email)
     })
 
     return () => {
+      clearInterval(interval)
+      window.removeEventListener('custom-auth-login', handleCustomAuth)
+      window.removeEventListener('custom-auth-logout', handleCustomAuth)
       subscription.unsubscribe()
     }
-  }, [supabase])
+  }, [])
 
   const handleSignOut = async () => {
-    await supabase.auth.signOut()
-    router.refresh()
-    router.push("/login")
+    try {
+      setIsLoading(true)
+      // Clear Supabase session
+      await supabase.auth.signOut()
+      // Clear custom tokens
+      Cookies.remove('idToken')
+      Cookies.remove('refreshToken')
+      setIsLoggedIn(false)
+      setUserEmail(null)
+      router.push('/login')
+    } catch (error) {
+      console.error('Sign out error:', error)
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
-    <nav className="border-b bg-background">
-      <div className="flex items-center justify-between h-16 px-4">
-        <div className="flex items-center md:hidden">
-          <Sheet>
-            <SheetTrigger asChild>
-              <Button variant="outline" size="icon" className="md:hidden">
-                <Menu className="w-5 h-5" />
-                <span className="sr-only">Toggle menu</span>
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="left" className="w-[240px] sm:w-[300px] pr-0">
-              <Sidebar />
-            </SheetContent>
-          </Sheet>
+    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="container flex h-14 items-center">
+        <div className="mr-4 hidden md:flex">
+          <Link href="/" className="mr-6 flex items-center space-x-2">
+            {/* <span className="hidden font-bold sm:inline-block">
+              Afford Abode
+            </span> */}
+          </Link>
         </div>
-
-        <div className="flex items-center w-full max-w-sm ml-4 md:ml-0">
-          <div className="relative w-full">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              type="search"
-              placeholder="Search..."
-              className="w-full pl-8 bg-background md:w-[300px] lg:w-[400px]"
-            />
+        <Sheet>
+          <SheetTrigger asChild>
+            <Button variant="ghost" className="mr-2 px-0 text-base hover:bg-transparent focus-visible:bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 md:hidden">
+              <Menu className="h-6 w-6" />
+              <span className="sr-only">Toggle Menu</span>
+            </Button>
+          </SheetTrigger>
+          <SheetContent side="left" className="pr-0">
+            <Sidebar />
+          </SheetContent>
+        </Sheet>
+        <div className="flex flex-1 items-center justify-between space-x-2 md:justify-end">
+          <div className="w-full flex-1 md:w-auto md:flex-none">
+            <div className="relative">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                type="search"
+                placeholder="Search..."
+                className="w-full rounded-md bg-background pl-8 md:w-[200px] lg:w-[300px]"
+              />
+            </div>
           </div>
-        </div>
-
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" className="text-muted-foreground">
-            <Bell className="w-5 h-5" />
-            <span className="sr-only">Notifications</span>
-          </Button>
-
-          {loading ? (
-            <Button variant="ghost" size="sm" disabled>
-              Loading...
-            </Button>
-          ) : user ? (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="relative w-8 h-8 rounded-full">
-                  <Avatar className="w-8 h-8">
-                    <AvatarImage
-                      src={user.user_metadata?.avatar_url || "/placeholder.svg"}
-                      alt={user.user_metadata?.full_name || "User"}
-                    />
-                    <AvatarFallback>
-                      {(user.user_metadata?.full_name?.[0] || user.email?.[0] || "U").toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-56" align="end" forceMount>
-                <DropdownMenuLabel className="font-normal">
-                  <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium leading-none">{user.user_metadata?.full_name || user.email}</p>
-                    <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
-                  </div>
-                </DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem asChild>
-                  <Link href="/dashboard/profile">Profile</Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href="/dashboard/settings">Settings</Link>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleSignOut}>Log out</DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          ) : (
-            <Button asChild>
-              <Link href="/login">Sign in</Link>
-            </Button>
-          )}
+          <nav className="flex items-center space-x-2">
+            {isLoggedIn ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                    <Avatar className="h-8 w-8">
+                      {/* <AvatarImage src="/avatars/01.png" alt={userEmail || "User"} /> */}
+                      <AvatarFallback>{userEmail?.charAt(0).toUpperCase() || "U"}</AvatarFallback>
+                    </Avatar>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-56" align="end" forceMount>
+                  <DropdownMenuLabel className="font-normal">
+                    <div className="flex flex-col space-y-1">
+                      <p className="text-sm font-medium leading-none">{userEmail}</p>
+                    </div>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleSignOut}>
+                    Log out
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <LoginButton />
+            )}
+          </nav>
         </div>
       </div>
-    </nav>
+    </header>
   )
 }

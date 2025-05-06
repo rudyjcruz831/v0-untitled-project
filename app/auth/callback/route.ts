@@ -1,19 +1,20 @@
-import { type NextRequest, NextResponse } from "next/server"
-import { createClient } from "@/utils/supabase/server"
+import { createClient } from '@/utils/supabase/server'
+import { NextResponse } from 'next/server'
+import { cookies } from 'next/headers'
 
-export async function GET(request: NextRequest) {
+export async function GET(request: Request) {
   const requestUrl = new URL(request.url)
-  const code = requestUrl.searchParams.get("code")
-  const redirectTo = requestUrl.searchParams.get("redirectTo") || "/dashboard"
+  const code = requestUrl.searchParams.get('code')
+  const next = requestUrl.searchParams.get('next') ?? '/dashboard'
 
   if (code) {
-    const supabase = createClient()
+    const supabase = await createClient()
     const { error } = await supabase.auth.exchangeCodeForSession(code)
-    if (error) {
-      return NextResponse.redirect(new URL(`/login?error=${error.message}`, request.url))
+    if (!error) {
+      return NextResponse.redirect(new URL(next, requestUrl.origin))
     }
   }
 
-  // URL to redirect to after sign in process completes
-  return NextResponse.redirect(new URL(redirectTo, request.url))
+  // Return the user to an error page with some instructions
+  return NextResponse.redirect(new URL('/auth/auth-code-error', requestUrl.origin))
 }
