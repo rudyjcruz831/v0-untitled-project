@@ -57,32 +57,23 @@ export function Navbar() {
   return (
     <nav className="border-b bg-background">
       <div className="flex items-center justify-between h-16 px-4">
-        <div className="flex items-center md:hidden">
-          <Sheet>
-            <SheetTrigger asChild>
-              <Button variant="outline" size="icon" className="md:hidden">
-                <Menu className="w-5 h-5" />
-                <span className="sr-only">Toggle menu</span>
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="left" className="w-[240px] sm:w-[300px] pr-0">
-              <Sidebar />
-            </SheetContent>
-          </Sheet>
-        </div>
-
-        <div className="flex items-center w-full max-w-sm ml-4 md:ml-0">
-          <div className="relative w-full">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              type="search"
-              placeholder="Search..."
-              className="w-full pl-8 bg-background md:w-[300px] lg:w-[400px]"
-            />
+        <div className="flex items-center">
+          <div className="md:hidden">
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button variant="outline" size="icon" className="md:hidden">
+                  <Menu className="w-5 h-5" />
+                  <span className="sr-only">Toggle menu</span>
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="left" className="w-[240px] sm:w-[300px] pr-0">
+                <Sidebar />
+              </SheetContent>
+            </Sheet>
           </div>
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-4 ml-auto">
           <Button variant="ghost" size="icon" className="text-muted-foreground">
             <Bell className="w-5 h-5" />
             <span className="sr-only">Notifications</span>
