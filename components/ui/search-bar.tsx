@@ -38,8 +38,8 @@ export function SearchBar({ onSearch }: SearchBarProps) {
             throw new Error(data.error || 'Search failed');
           }
 
-          // Refresh the page to show new results
-          router.refresh();
+          // Navigate to listings page after successful search
+          router.push('/dashboard/listings');
           toast.success('Search completed successfully');
         } catch (error) {
           console.error('Search error:', error);
