@@ -18,6 +18,11 @@ const sidebarItems = [
     href: "/dashboard/listings",
     icon: Building,
   },
+  {
+    title: "Questionaire",
+    href: "/dashboard/questionaire",
+    icon: Building,
+  },
 ]
 
 export function Sidebar() {
