@@ -71,6 +71,9 @@ class RedfinSpider(scrapy.Spider):
             area_value = area_value or "-"
             area_label = area_label or "-"
             area = f"{area_value} {area_label}"
+
+            image_url = products.css('img.bp-Homecard__Photo--image::attr(src)').get()
+
             yield {
                 "address" : address,
                 "price" : price,
@@ -78,7 +81,7 @@ class RedfinSpider(scrapy.Spider):
                 "baths" : baths,
                 "area" : area,
                 "home_url" : full_url,
-                "image_url" : products.css('img.bp-Homecard__Photo--image::attr(src)').get()
+                "image_url" : image_url
                 }
 
             
