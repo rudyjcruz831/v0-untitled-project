@@ -1,7 +1,5 @@
 {
-  "/api/questionnaire/route": "app/api/questionnaire/route.js",
-  "/dashboard/questionaire/page": "app/dashboard/questionaire/page.js",
-  "/dashboard/listings/page": "app/dashboard/listings/page.js",
+  "/page": "app/page.js",
   "/dashboard/page": "app/dashboard/page.js",
-  "/dashboard/personal-recs/page": "app/dashboard/personal-recs/page.js"
+  "/dashboard/listings/page": "app/dashboard/listings/page.js"
 }
