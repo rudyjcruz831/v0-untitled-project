@@ -1,3 +1,5 @@
 node_modules
 
 model/personal_recs.py
+
+.env.local
